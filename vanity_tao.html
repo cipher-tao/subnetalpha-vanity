@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAO Vanity Generator · SubnetAlpha</title>
+<meta name="description" content="Free open-source tool to generate Bittensor TAO vanity addresses. 100% client-side, zero tracking, your seed never leaves the browser.">
+
+<!-- OpenGraph for X / Telegram sharing -->
+
+<meta property="og:title" content="TAO Vanity Generator · SubnetAlpha">
+<meta property="og:description" content="Generate Bittensor TAO vanity addresses. 100% client-side, zero tracking, open source.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://subnetalpha.org/vanity">
+<meta property="og:image" content="https://subnetalpha.org/vanity/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@cipher_tao">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000000;
+    --bg-alt: #0a0f0a;
+    --panel: #0d1410;
+    --border: #1e3a24;
+    --green: #00ff88;
+    --green-dim: #00b863;
+    --green-glow: #00ff8855;
+    --amber: #ffb800;
+    --red: #ff3b5c;
+    --text: #c8e6c9;
+    --muted: #5a7a60;
+  }
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 14px;
+line-height: 1.5;
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background:
+radial-gradient(ellipse at 20% 0%, rgba(0,255,136,0.06), transparent 50%),
+radial-gradient(ellipse at 80% 100%, rgba(0,255,136,0.04), transparent 50%);
+pointer-events: none;
+z-index: 0;
+}
+
+body::after {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image: repeating-linear-gradient(
+0deg,
+transparent 0,
+transparent 2px,
+rgba(0,255,136,0.015) 2px,
+rgba(0,255,136,0.015) 3px
+);
+pointer-events: none;
+z-index: 1;
+}
+
+.container {
+position: relative;
+z-index: 2;
+max-width: 980px;
+margin: 0 auto;
+padding: 32px 20px 80px;
+}
+
+header {
+border-bottom: 1px solid var(–border);
+padding-bottom: 20px;
+margin-bottom: 32px;
+}
+
+.brand {
+font-family: ‘Orbitron’, sans-serif;
+font-weight: 900;
+font-size: 11px;
+letter-spacing: 0.3em;
+color: var(–green);
+text-shadow: 0 0 12px var(–green-glow);
+margin-bottom: 6px;
+}
+
+h1 {
+font-family: ‘Orbitron’, sans-serif;
+font-weight: 700;
+font-size: clamp(24px, 4vw, 36px);
+letter-spacing: 0.05em;
+color: var(–text);
+margin-bottom: 8px;
+}
+
+h1 .accent { color: var(–green); }
+
+.subtitle {
+color: var(–muted);
+font-size: 13px;
+letter-spacing: 0.02em;
+}
+
+.warn {
+margin-top: 16px;
+padding: 10px 14px;
+border-left: 2px solid var(–amber);
+background: rgba(255,184,0,0.04);
+color: var(–amber);
+font-size: 12px;
+}
+
+.warn b { font-weight: 700; }
+
+/* Panels */
+.panel {
+background: var(–panel);
+border: 1px solid var(–border);
+margin-bottom: 20px;
+position: relative;
+}
+
+.panel-header {
+padding: 10px 16px;
+border-bottom: 1px solid var(–border);
+font-size: 11px;
+letter-spacing: 0.2em;
+color: var(–green-dim);
+text-transform: uppercase;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.panel-body { padding: 20px; }
+
+/* Form */
+.row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.col { flex: 1; min-width: 240px; }
+
+label {
+display: block;
+font-size: 11px;
+letter-spacing: 0.15em;
+color: var(–muted);
+text-transform: uppercase;
+margin-bottom: 8px;
+}
+
+input[type=“text”], input[type=“number”], select {
+width: 100%;
+background: var(–bg);
+border: 1px solid var(–border);
+color: var(–green);
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 16px;
+padding: 12px 14px;
+outline: none;
+transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+input[type=“text”]:focus, input[type=“number”]:focus, select:focus {
+border-color: var(–green);
+box-shadow: 0 0 0 1px var(–green-glow);
+}
+
+.pattern-input {
+font-size: 18px !important;
+letter-spacing: 0.05em;
+}
+
+.pattern-preview {
+margin-top: 8px;
+font-size: 13px;
+color: var(–muted);
+min-height: 18px;
+}
+
+.pattern-preview .match { color: var(–green); font-weight: 700; }
+
+/* Position selector */
+.seg {
+display: flex;
+border: 1px solid var(–border);
+background: var(–bg);
+}
+.seg button {
+flex: 1;
+background: transparent;
+border: none;
+color: var(–muted);
+padding: 12px 8px;
+font-family: inherit;
+font-size: 12px;
+letter-spacing: 0.1em;
+cursor: pointer;
+text-transform: uppercase;
+transition: all 0.15s;
+}
+.seg button.active {
+background: var(–green);
+color: var(–bg);
+font-weight: 700;
+}
+.seg button:not(.active):hover { color: var(–green); }
+
+/* Difficulty */
+.difficulty {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 1px;
+background: var(–border);
+border: 1px solid var(–border);
+margin-top: 12px;
+}
+.diff-cell {
+background: var(–bg);
+padding: 12px;
+}
+.diff-label {
+font-size: 10px;
+letter-spacing: 0.15em;
+color: var(–muted);
+text-transform: uppercase;
+margin-bottom: 4px;
+}
+.diff-value {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 16px;
+font-weight: 700;
+color: var(–green);
+}
+.diff-value.warn-amber { color: var(–amber); }
+.diff-value.warn-red { color: var(–red); }
+
+/* Controls */
+.controls {
+display: flex;
+gap: 12px;
+margin-top: 8px;
+}
+
+button.btn {
+background: var(–green);
+color: var(–bg);
+border: none;
+padding: 14px 28px;
+font-family: ‘Orbitron’, sans-serif;
+font-weight: 700;
+font-size: 13px;
+letter-spacing: 0.2em;
+cursor: pointer;
+text-transform: uppercase;
+transition: all 0.15s;
+flex: 1;
+}
+button.btn:hover { box-shadow: 0 0 24px var(–green-glow); }
+button.btn:disabled { opacity: 0.3; cursor: not-allowed; }
+button.btn.stop { background: var(–red); color: #fff; }
+button.btn.stop:hover { box-shadow: 0 0 24px rgba(255,59,92,0.5); }
+
+/* Stats */
+.stats {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+gap: 1px;
+background: var(–border);
+border: 1px solid var(–border);
+}
+.stat-cell {
+background: var(–bg);
+padding: 16px;
+}
+.stat-label {
+font-size: 10px;
+letter-spacing: 0.15em;
+color: var(–muted);
+text-transform: uppercase;
+margin-bottom: 6px;
+}
+.stat-value {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 22px;
+font-weight: 700;
+color: var(–green);
+text-shadow: 0 0 8px var(–green-glow);
+}
+
+/* Results */
+#results { max-height: 480px; overflow-y: auto; }
+#results::-webkit-scrollbar { width: 6px; }
+#results::-webkit-scrollbar-track { background: var(–bg); }
+#results::-webkit-scrollbar-thumb { background: var(–border); }
+
+.result {
+border-bottom: 1px solid var(–border);
+padding: 16px 20px;
+animation: slideIn 0.3s ease-out;
+}
+@keyframes slideIn {
+from { opacity: 0; transform: translateY(-8px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.result-addr {
+font-size: 14px;
+color: var(–green);
+word-break: break-all;
+margin-bottom: 8px;
+font-weight: 500;
+}
+.result-addr .highlight {
+background: rgba(0,255,136,0.18);
+padding: 1px 2px;
+border-radius: 1px;
+}
+
+.result-actions {
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+margin-top: 8px;
+}
+
+button.mini {
+background: transparent;
+border: 1px solid var(–border);
+color: var(–muted);
+padding: 6px 12px;
+font-family: inherit;
+font-size: 11px;
+letter-spacing: 0.1em;
+cursor: pointer;
+text-transform: uppercase;
+transition: all 0.15s;
+}
+button.mini:hover {
+color: var(–green);
+border-color: var(–green);
+}
+
+.seed-box {
+margin-top: 10px;
+padding: 12px;
+background: var(–bg);
+border: 1px dashed var(–red);
+color: var(–amber);
+font-size: 13px;
+word-break: break-word;
+display: none;
+}
+.seed-box.shown { display: block; }
+.seed-box .seed-warn {
+color: var(–red);
+font-size: 10px;
+letter-spacing: 0.15em;
+text-transform: uppercase;
+margin-bottom: 6px;
+}
+
+.empty {
+padding: 60px 20px;
+text-align: center;
+color: var(–muted);
+font-size: 13px;
+letter-spacing: 0.05em;
+}
+.empty .blink {
+display: inline-block;
+animation: blink 1s steps(2) infinite;
+}
+@keyframes blink { to { opacity: 0; } }
+
+.status-dot {
+display: inline-block;
+width: 8px;
+height: 8px;
+border-radius: 50%;
+background: var(–muted);
+margin-right: 8px;
+vertical-align: middle;
+}
+.status-dot.running {
+background: var(–green);
+box-shadow: 0 0 8px var(–green);
+animation: pulse 1s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: 0.4; } }
+
+/* Footer */
+footer {
+margin-top: 40px;
+padding-top: 20px;
+border-top: 1px solid var(–border);
+color: var(–muted);
+font-size: 11px;
+text-align: center;
+letter-spacing: 0.1em;
+}
+footer a { color: var(–green-dim); text-decoration: none; }
+footer a:hover { color: var(–green); }
+
+/* MATRIX TERMINAL */
+.terminal {
+background: #000;
+height: 320px;
+overflow: hidden;
+position: relative;
+padding: 12px 16px;
+}
+.terminal::before {
+content: ‘’;
+position: absolute;
+left: 0; right: 0; top: 0;
+height: 60px;
+background: linear-gradient(to bottom, #000 0%, transparent 100%);
+pointer-events: none;
+z-index: 3;
+}
+.terminal::after {
+content: ‘’;
+position: absolute;
+inset: 0;
+background-image: repeating-linear-gradient(
+0deg, transparent 0, transparent 2px,
+rgba(0,255,136,0.025) 2px, rgba(0,255,136,0.025) 3px
+);
+pointer-events: none;
+z-index: 1;
+}
+.terminal-inner {
+position: relative;
+z-index: 2;
+display: flex;
+flex-direction: column;
+justify-content: flex-end;
+height: 100%;
+}
+.terminal-line {
+color: rgba(0, 184, 99, 0.45);
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 11px;
+line-height: 1.7;
+letter-spacing: 0.03em;
+white-space: nowrap;
+overflow: hidden;
+animation: terminalSlide 0.15s ease-out;
+transition: opacity 0.3s, color 0.3s;
+}
+.terminal-line:nth-last-child(1) { color: rgba(0, 255, 136, 1); text-shadow: 0 0 8px rgba(0,255,136,0.6); }
+.terminal-line:nth-last-child(2) { color: rgba(0, 255, 136, 0.85); }
+.terminal-line:nth-last-child(3) { color: rgba(0, 255, 136, 0.7); }
+.terminal-line:nth-last-child(4) { color: rgba(0, 200, 110, 0.6); }
+.terminal-line:nth-last-child(5) { color: rgba(0, 184, 99, 0.5); }
+.terminal-line .prefix { color: var(–green-dim); opacity: 0.6; margin-right: 4px; }
+.terminal-line .partial {
+color: var(–green);
+text-shadow: 0 0 6px var(–green);
+font-weight: 700;
+background: rgba(0, 255, 136, 0.12);
+padding: 0 1px;
+}
+.terminal-line .miss { color: inherit; }
+.terminal-line.match-line {
+color: #000 !important;
+background: var(–green);
+padding: 4px 8px;
+margin: 4px -8px;
+font-weight: 700;
+text-shadow: none !important;
+animation: matchFlash 0.8s ease-out;
+}
+.terminal-line.match-line .prefix { color: #000; opacity: 1; font-weight: 900; }
+@keyframes terminalSlide {
+from { transform: translateY(8px); opacity: 0; }
+to { transform: translateY(0); opacity: 1; }
+}
+@keyframes matchFlash {
+0% { box-shadow: 0 0 0 0 rgba(0,255,136,0.8); }
+100% { box-shadow: 0 0 40px 4px rgba(0,255,136,0); }
+}
+.terminal-empty {
+color: var(–muted);
+text-align: center;
+padding: 40px 0;
+font-size: 12px;
+letter-spacing: 0.15em;
+}
+.terminal-cursor::after {
+content: ‘_’;
+display: inline-block;
+animation: blink 1s steps(2) infinite;
+color: var(–green);
+margin-left: 2px;
+}
+
+.err-banner {
+background: rgba(255,59,92,0.1);
+border: 1px solid var(–red);
+color: var(–red);
+padding: 10px 14px;
+margin-bottom: 16px;
+font-size: 12px;
+display: none;
+}
+.err-banner.show { display: block; }
+
+/* DISCLAIMER MODAL */
+.modal-overlay {
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.92);
+backdrop-filter: blur(8px);
+z-index: 100;
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 20px;
+}
+.modal-overlay.hidden { display: none; }
+.modal {
+max-width: 560px;
+width: 100%;
+background: var(–panel);
+border: 1px solid var(–green);
+box-shadow: 0 0 40px rgba(0,255,136,0.15);
+max-height: 90vh;
+overflow-y: auto;
+}
+.modal-head {
+padding: 16px 20px;
+border-bottom: 1px solid var(–border);
+font-family: ‘Orbitron’, sans-serif;
+font-weight: 700;
+font-size: 14px;
+letter-spacing: 0.2em;
+color: var(–green);
+text-transform: uppercase;
+}
+.modal-body { padding: 20px; font-size: 13px; line-height: 1.7; color: var(–text); }
+.modal-body h3 {
+color: var(–green-dim);
+font-family: ‘Orbitron’, sans-serif;
+font-size: 11px;
+letter-spacing: 0.15em;
+margin: 16px 0 8px;
+text-transform: uppercase;
+}
+.modal-body h3:first-child { margin-top: 0; }
+.modal-body ul { margin: 0 0 12px 0; padding-left: 20px; }
+.modal-body li { margin-bottom: 6px; }
+.modal-body code { color: var(–green); background: var(–bg); padding: 1px 5px; }
+.modal-foot {
+padding: 16px 20px;
+border-top: 1px solid var(–border);
+display: flex;
+align-items: center;
+gap: 12px;
+flex-wrap: wrap;
+}
+.modal-check {
+display: flex;
+align-items: center;
+gap: 8px;
+font-size: 12px;
+color: var(–text);
+cursor: pointer;
+flex: 1;
+min-width: 200px;
+}
+.modal-check input { width: 16px; height: 16px; accent-color: var(–green); cursor: pointer; }
+
+/* CTA BANNER */
+.cta {
+margin-top: 32px;
+padding: 24px;
+background: linear-gradient(135deg, rgba(0,255,136,0.06), rgba(0,255,136,0.02));
+border: 1px solid var(–green-dim);
+position: relative;
+overflow: hidden;
+}
+.cta::before {
+content: ‘’;
+position: absolute;
+top: -50%; right: -20%;
+width: 60%; height: 200%;
+background: radial-gradient(ellipse, rgba(0,255,136,0.08), transparent 70%);
+pointer-events: none;
+}
+.cta-inner {
+position: relative;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 20px;
+flex-wrap: wrap;
+}
+.cta-text { flex: 1; min-width: 240px; }
+.cta-eyebrow {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 10px;
+letter-spacing: 0.3em;
+color: var(–green);
+text-transform: uppercase;
+margin-bottom: 6px;
+}
+.cta-title {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 20px;
+font-weight: 700;
+color: var(–text);
+margin-bottom: 6px;
+}
+.cta-sub {
+font-size: 13px;
+color: var(–muted);
+line-height: 1.5;
+}
+.cta-btn {
+background: var(–green);
+color: var(–bg) !important;
+border: none;
+padding: 14px 24px;
+font-family: ‘Orbitron’, sans-serif;
+font-weight: 700;
+font-size: 12px;
+letter-spacing: 0.2em;
+text-transform: uppercase;
+text-decoration: none;
+display: inline-block;
+transition: all 0.2s;
+white-space: nowrap;
+}
+.cta-btn:hover {
+box-shadow: 0 0 30px var(–green-glow);
+transform: translateY(-1px);
+}
+
+/* TRUST BADGES (header strip) */
+.trust-badges {
+display: flex;
+gap: 12px;
+flex-wrap: wrap;
+margin-top: 14px;
+font-size: 10px;
+letter-spacing: 0.15em;
+text-transform: uppercase;
+color: var(–green-dim);
+}
+.trust-badges span {
+padding: 4px 10px;
+border: 1px solid var(–border);
+background: var(–bg);
+}
+.trust-badges span.offline-yes { border-color: var(–green); color: var(–green); }
+.trust-badges span.offline-no { border-color: var(–amber); color: var(–amber); }
+
+@media (max-width: 600px) {
+.container { padding: 20px 14px 60px; }
+.stat-value { font-size: 18px; }
+.pattern-input { font-size: 16px !important; }
+}
+</style>
+
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="brand">SUBNETALPHA // VANITY GEN v1.0</div>
+    <h1>TAO <span class="accent">Vanity</span> Address Generator</h1>
+    <div class="subtitle">Generate Bittensor SS58 addresses matching your pattern.</div>
+    <div class="trust-badges">
+      <span>✓ 100% Client-side</span>
+      <span>✓ Open source</span>
+      <span>✓ Zero tracking</span>
+      <span id="offlineBadge" class="offline-no">⊙ Network: ONLINE</span>
+    </div>
+    <div class="warn">
+      <b>⚠ SECURITY:</b> Everything runs in your browser. Your seed phrase NEVER leaves this page. For maximum safety: disconnect from internet before clicking Start.
+    </div>
+  </header>
+
+  <!-- CONFIG PANEL -->
+
+  <div class="panel">
+    <div class="panel-header">
+      <span>// Pattern Configuration</span>
+      <span id="loaderStatus" style="color: var(--muted); font-size: 10px;">Loading crypto libs...</span>
+    </div>
+    <div class="panel-body">
+
+```
+  <div class="row">
+    <div class="col" style="flex: 2;">
+      <label>Pattern to find (full, e.g. 5ERUMS or 5BXNG77)</label>
+      <input type="text" id="pattern" class="pattern-input" placeholder="5ERUMS" autocomplete="off" spellcheck="false">
+      <div class="pattern-preview" id="patternPreview">Type a pattern above. TAO addresses always start with <span class="match">5</span>.</div>
+    </div>
+    <div class="col">
+      <label>Position</label>
+      <div class="seg">
+        <button data-pos="start" class="active">Starts with</button>
+        <button data-pos="end">Ends with</button>
+        <button data-pos="contains">Contains</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <label>Workers (CPU threads) <span id="coreHint" style="color: var(--green-dim); text-transform: none; letter-spacing: 0;"></span></label>
+      <input type="number" id="workers" min="1" max="32" value="4">
+      <div id="workerWarn" style="margin-top: 6px; font-size: 11px; color: var(--amber); display: none;"></div>
+    </div>
+    <div class="col">
+      <label>Mnemonic words</label>
+      <select id="mnemonicWords">
+        <option value="12">12 words</option>
+        <option value="24" selected>24 words (recommended)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="difficulty">
+    <div class="diff-cell">
+      <div class="diff-label">Expected attempts</div>
+      <div class="diff-value" id="diffAttempts">—</div>
+    </div>
+    <div class="diff-cell">
+      <div class="diff-label">Est. time @ current rate</div>
+      <div class="diff-value" id="diffTime">—</div>
+    </div>
+    <div class="diff-cell">
+      <div class="diff-label">Difficulty</div>
+      <div class="diff-value" id="diffLevel">—</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="startBtn" disabled>▶ Start</button>
+    <button class="btn stop" id="stopBtn" disabled>■ Stop</button>
+  </div>
+
+</div>
+```
+
+  </div>
+
+  <!-- STATS PANEL -->
+
+  <div class="panel">
+    <div class="panel-header">
+      <span><span class="status-dot" id="statusDot"></span>// Live Stats</span>
+      <span id="elapsedTime" style="color: var(--muted); font-size: 10px;">00:00:00</span>
+    </div>
+    <div class="panel-body">
+      <div class="stats">
+        <div class="stat-cell">
+          <div class="stat-label">Attempts</div>
+          <div class="stat-value" id="statAttempts">0</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-label">Rate (/sec)</div>
+          <div class="stat-value" id="statRate">0</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-label">Found</div>
+          <div class="stat-value" id="statFound">0</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-label">Workers</div>
+          <div class="stat-value" id="statWorkers">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ERROR BANNER -->
+
+  <div class="err-banner" id="errBanner"></div>
+
+  <!-- LIVE TERMINAL -->
+
+  <div class="panel">
+    <div class="panel-header">
+      <span>// Live Terminal — Scanning Addresses</span>
+      <span id="termStatus" style="color: var(--muted); font-size: 10px;">idle</span>
+    </div>
+    <div class="terminal">
+      <div class="terminal-inner" id="terminal">
+        <div class="terminal-empty">// Awaiting workers<span class="terminal-cursor"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS PANEL -->
+
+  <div class="panel">
+    <div class="panel-header">
+      <span>// Matches Found</span>
+      <button class="mini" id="clearBtn">Clear</button>
+    </div>
+    <div id="results">
+      <div class="empty">No matches yet<span class="blink">_</span></div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+
+  <div class="cta">
+    <div class="cta-inner">
+      <div class="cta-text">
+        <div class="cta-eyebrow">▲ Trade Bittensor subnets</div>
+        <div class="cta-title">Now trade alpha tokens at lightning speed.</div>
+        <div class="cta-sub">Built by a miner, for traders. Sub-second execution, auto TP/SL, subnet sniper, 30% referral rewards.</div>
+      </div>
+      <a href="https://t.me/SubnetAlphaBot" target="_blank" rel="noopener" class="cta-btn">Try @SubnetAlphaBot →</a>
+    </div>
+  </div>
+
+  <footer>
+    Built by <a href="https://x.com/cipher_tao" target="_blank" rel="noopener">@cipher_tao</a>
+    &nbsp;·&nbsp; <a href="https://github.com/cipher-tao/subnetalpha-vanity" target="_blank" rel="noopener">View source on GitHub</a>
+    &nbsp;·&nbsp; <a href="https://t.me/SubnetAlphaSupport" target="_blank" rel="noopener">Support</a>
+    &nbsp;·&nbsp; <a href="#" id="howto">How to import</a>
+    <br><br>
+    sr25519 / SS58 prefix 42 &nbsp;·&nbsp; Not affiliated with the Bittensor Foundation. No warranty. Verify your wallet on a test setup before transferring funds.
+  </footer>
+
+</div>
+
+<!-- HOW-TO MODAL (simple inline reveal) -->
+
+<div id="howtoBox" class="panel" style="display:none; max-width:980px; margin: 0 auto 40px; position: relative; z-index: 2;">
+  <div class="panel-header">
+    <span>// Importing your vanity wallet into btcli</span>
+    <button class="mini" onclick="document.getElementById('howtoBox').style.display='none'">Close</button>
+  </div>
+  <div class="panel-body" style="font-size: 13px; line-height: 1.8;">
+    <p style="margin-bottom: 12px;">Une fois ton adresse trouvée, copie le mnemonic et importe-le avec btcli :</p>
+    <pre style="background: var(--bg); padding: 14px; border: 1px solid var(--border); overflow-x: auto; color: var(--green);">
+# Coldkey (wallet principal)
+btcli wallet regen_coldkey --wallet.name &lt;name&gt; \\
+  --mnemonic "word1 word2 word3 ... word24"
+
+# Hotkey (mining/staking)
+
+btcli wallet regen_hotkey –wallet.name <name> –wallet.hotkey <hk> \
+–mnemonic “word1 word2 word3 … word24”</pre>
+<p style="margin-top: 14px; color: var(--amber);">⚠ Sauvegarde le mnemonic dans un gestionnaire de mots de passe OU sur papier hors-ligne. Personne ne pourra le récupérer si tu le perds.</p>
+<p style="margin-top: 10px; color: var(--muted); font-size: 12px;">12 ou 24 mots = même format BIP39, le 24 mots est plus sécurisé (256 bits d’entropie vs 128).</p>
+
+  </div>
+</div>
+
+<!-- DISCLAIMER MODAL -->
+
+<div class="modal-overlay" id="disclaimerModal">
+  <div class="modal">
+    <div class="modal-head">// Before you continue</div>
+    <div class="modal-body">
+      <h3>What this tool does</h3>
+      Generates Bittensor (TAO) wallet addresses matching a custom pattern, by brute-forcing random seed phrases until one produces an address you like. Pure crypto, no magic.
+
+```
+  <h3>How your secret is protected</h3>
+  <ul>
+    <li>All computation runs <b>inside your browser only</b>. No server, no API call, no logging.</li>
+    <li>Your mnemonic <b>NEVER leaves this page</b>. There is no network code that sends it anywhere.</li>
+    <li>Source is <a href="https://github.com/cipher-tao/subnetalpha-vanity" target="_blank" rel="noopener">open on GitHub</a>. Inspect it. Diff it against this page (DevTools → Sources).</li>
+  </ul>
+
+  <h3>Recommended workflow</h3>
+  <ul>
+    <li>For high-value addresses: <b>disconnect your internet</b> before clicking Start. The trust badge above will turn green.</li>
+    <li>Save the mnemonic <b>offline</b> (paper or hardware password manager) before transferring any TAO.</li>
+    <li>Always verify the generated address by importing it into <code>btcli</code> on a test setup and confirming it matches.</li>
+  </ul>
+
+  <h3>Disclaimer</h3>
+  This tool is provided as-is with no warranty. The author is not responsible for lost funds, leaked seeds via your environment (malicious extensions, compromised OS, screen capture, etc.), or any other loss. <b>Use at your own risk.</b>
+</div>
+<div class="modal-foot">
+  <label class="modal-check">
+    <input type="checkbox" id="agreeCheck">
+    I understand. I accept the risks and the no-warranty terms.
+  </label>
+  <button class="btn" id="agreeBtn" disabled style="flex: 0 0 auto;">Continue →</button>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- Load @polkadot bundles from jsdelivr (CORS-friendly for workers) -->
+
+<script src="https://cdn.jsdelivr.net/npm/@polkadot/util@12.6.2/bundle-polkadot-util.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@polkadot/util-crypto@12.6.2/bundle-polkadot-util-crypto.js"></script>
+
+<script>
+// ============================================================
+// MAIN THREAD
+// ============================================================
+
+const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+const POLKADOT_UTIL_URL = 'https://cdn.jsdelivr.net/npm/@polkadot/util@12.6.2/bundle-polkadot-util.js';
+const POLKADOT_CRYPTO_URL = 'https://cdn.jsdelivr.net/npm/@polkadot/util-crypto@12.6.2/bundle-polkadot-util-crypto.js';
+
+const state = {
+  position: 'start',
+  pattern: '',
+  workers: [],
+  running: false,
+  startTime: 0,
+  attempts: 0,
+  lastAttempts: 0,
+  lastRateTime: 0,
+  rate: 0,
+  found: 0,
+  ready: false,
+  pendingSamples: [],
+  workerFailures: 0,
+  mainThreadFallback: false
+};
+
+const el = {
+  pattern: document.getElementById('pattern'),
+  patternPreview: document.getElementById('patternPreview'),
+  workers: document.getElementById('workers'),
+  mnemonicWords: document.getElementById('mnemonicWords'),
+  startBtn: document.getElementById('startBtn'),
+  stopBtn: document.getElementById('stopBtn'),
+  clearBtn: document.getElementById('clearBtn'),
+  results: document.getElementById('results'),
+  statAttempts: document.getElementById('statAttempts'),
+  statRate: document.getElementById('statRate'),
+  statFound: document.getElementById('statFound'),
+  statWorkers: document.getElementById('statWorkers'),
+  elapsedTime: document.getElementById('elapsedTime'),
+  statusDot: document.getElementById('statusDot'),
+  diffAttempts: document.getElementById('diffAttempts'),
+  diffTime: document.getElementById('diffTime'),
+  diffLevel: document.getElementById('diffLevel'),
+  loaderStatus: document.getElementById('loaderStatus')
+};
+
+// Default workers = CPU count
+const detectedCores = navigator.hardwareConcurrency || 4;
+el.workers.value = detectedCores;
+document.getElementById('coreHint').textContent = `· detected: ${detectedCores} cores`;
+
+function validateWorkers() {
+  const n = parseInt(el.workers.value) || 0;
+  const warn = document.getElementById('workerWarn');
+  if (n > detectedCores * 1.5) {
+    warn.style.display = 'block';
+    warn.textContent = `⚠ More workers than cores (${detectedCores}) won't speed up — they share CPU and eat RAM. Recommended: ${detectedCores}.`;
+  } else if (n < 1) {
+    el.workers.value = 1;
+    warn.style.display = 'none';
+  } else {
+    warn.style.display = 'none';
+  }
+}
+el.workers.addEventListener('input', validateWorkers);
+
+// Position selector
+document.querySelectorAll('.seg button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.seg button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.position = btn.dataset.pos;
+    updatePreview();
+    updateDifficulty();
+  });
+});
+
+el.pattern.addEventListener('input', e => {
+  // Filter to base58
+  const v = e.target.value.split('').filter(c => BASE58_ALPHABET.includes(c)).join('');
+  if (v !== e.target.value) e.target.value = v;
+  state.pattern = v;
+  updatePreview();
+  updateDifficulty();
+});
+
+function updatePreview() {
+  const p = state.pattern;
+  if (!p) {
+    el.patternPreview.innerHTML = 'Type a pattern above. TAO addresses always start with <span class="match">5</span>.';
+    return;
+  }
+  let html;
+  if (state.position === 'start') {
+    html = `Looking for: <span class="match">${escapeHtml(p)}</span>xxxxxxxxxxxxxxxx...`;
+    if (p[0] !== '5') {
+      html += `<br><span style="color: var(--red);">⚠ TAO addresses always start with "5" — no result will be found.</span>`;
+    } else if (p.length >= 2 && !'CDEFGH'.includes(p[1])) {
+      html += `<br><span style="color: var(--amber);">⚠ Second char "${escapeHtml(p[1])}" is rare/unreachable for prefix 42 (common: 5C, 5D, 5E, 5F, 5G, 5H).</span>`;
+    }
+  } else if (state.position === 'end') {
+    html = `Looking for: 5xxxxxxxxxxxxxxxx...<span class="match">${escapeHtml(p)}</span>`;
+  } else {
+    html = `Looking for: 5xxx...<span class="match">${escapeHtml(p)}</span>...xxxx`;
+  }
+  el.patternPreview.innerHTML = html;
+}
+
+function updateDifficulty() {
+  const p = state.pattern;
+  const len = p.length;
+  if (len === 0) {
+    el.diffAttempts.textContent = '—';
+    el.diffTime.textContent = '—';
+    el.diffLevel.textContent = '—';
+    el.diffLevel.className = 'diff-value';
+    return;
+  }
+
+  // For "starts with" patterns beginning with "5", the first char is free (every address starts with 5).
+  // So effective search space = pattern length minus the leading "5".
+  let effectiveLen = len;
+  if (state.position === 'start' && p[0] === '5') effectiveLen = len - 1;
+
+  let expected = Math.pow(58, effectiveLen) / 2;
+  if (state.position === 'contains') expected = expected / 40;
+
+  el.diffAttempts.textContent = formatNumber(expected);
+
+  // Mnemonic mode rate: PBKDF2 (2048 rounds) is the bottleneck.
+  // Realistic: ~500-2000/sec/worker depending on hardware.
+  const w = parseInt(el.workers.value) || 4;
+  const defaultPerWorker = 1000;
+  const estRate = state.rate > 0 ? state.rate : w * defaultPerWorker;
+  const seconds = expected / estRate;
+  const calibrating = state.rate === 0 ? ' (est.)' : '';
+  el.diffTime.textContent = formatDuration(seconds) + calibrating;
+
+  // Difficulty rating based on effective length
+  let level, cls = '';
+  if (effectiveLen <= 3) { level = 'TRIVIAL'; }
+  else if (effectiveLen === 4) { level = 'EASY'; }
+  else if (effectiveLen === 5) { level = 'MEDIUM'; cls = 'warn-amber'; }
+  else if (effectiveLen === 6) { level = 'HARD'; cls = 'warn-amber'; }
+  else { level = 'INSANE'; cls = 'warn-red'; }
+  el.diffLevel.textContent = level;
+  el.diffLevel.className = 'diff-value ' + cls;
+}
+
+function formatNumber(n) {
+  if (n < 1000) return Math.round(n).toString();
+  if (n < 1e6) return (n/1e3).toFixed(1) + 'K';
+  if (n < 1e9) return (n/1e6).toFixed(1) + 'M';
+  if (n < 1e12) return (n/1e9).toFixed(1) + 'B';
+  return (n/1e12).toFixed(1) + 'T';
+}
+
+function formatDuration(s) {
+  if (s < 60) return Math.ceil(s) + 's';
+  if (s < 3600) return Math.ceil(s/60) + ' min';
+  if (s < 86400) return (s/3600).toFixed(1) + ' h';
+  if (s < 86400 * 365) return (s/86400).toFixed(1) + ' days';
+  return (s/(86400*365)).toFixed(1) + ' years';
+}
+
+function formatElapsed(ms) {
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+// ============================================================
+// WORKER CODE (inlined)
+// ============================================================
+const workerCode = `
+let running = false;
+let pattern = '';
+let position = 'start';
+let mnemonicLen = 24;
+let count = 0;
+let lastReport = Date.now();
+
+self.onmessage = async (e) => {
+  const msg = e.data;
+  if (msg.cmd === 'init') {
+    try {
+      // If libs are already loaded inline (self.polkadotUtilCrypto exists), skip importScripts
+      if (typeof self.polkadotUtilCrypto === 'undefined') {
+        importScripts(msg.utilUrl, msg.cryptoUrl);
+      }
+      if (typeof self.polkadotUtilCrypto === 'undefined') {
+        throw new Error('polkadotUtilCrypto not defined after lib load');
+      }
+      await self.polkadotUtilCrypto.cryptoWaitReady();
+      self.postMessage({ type: 'ready' });
+    } catch (err) {
+      self.postMessage({ type: 'error', error: err.message || String(err) });
+    }
+  } else if (msg.cmd === 'start') {
+    pattern = msg.pattern;
+    position = msg.position;
+    mnemonicLen = msg.mnemonicLen;
+    running = true;
+    search();
+  } else if (msg.cmd === 'stop') {
+    running = false;
+  }
+};
+
+async function search() {
+  const { mnemonicGenerate, mnemonicToMiniSecret, sr25519PairFromSeed, encodeAddress } = self.polkadotUtilCrypto;
+  let sampleCounter = 0;
+
+  while (running) {
+    for (let i = 0; i < 100 && running; i++) {
+      const mnemonic = mnemonicGenerate(mnemonicLen);
+      const seed = mnemonicToMiniSecret(mnemonic);
+      const pair = sr25519PairFromSeed(seed);
+      const address = encodeAddress(pair.publicKey, 42);
+      count++;
+      sampleCounter++;
+
+      let match = false;
+      if (position === 'start') match = address.startsWith(pattern);
+      else if (position === 'end') match = address.endsWith(pattern);
+      else if (position === 'contains') match = address.includes(pattern);
+
+      if (match) {
+        self.postMessage({
+          type: 'match',
+          address,
+          mnemonic
+        });
+      }
+
+      // Emit a sample address every ~25 attempts for the live terminal
+      if (sampleCounter >= 25) {
+        sampleCounter = 0;
+        self.postMessage({ type: 'sample', address });
+      }
+    }
+
+    const now = Date.now();
+    if (now - lastReport > 250) {
+      self.postMessage({ type: 'progress', count });
+      count = 0;
+      lastReport = now;
+    }
+    await new Promise(r => setTimeout(r, 0));
+  }
+  self.postMessage({ type: 'stopped' });
+}
+`;
+
+let workerBlobUrl = null;
+function getWorkerUrl() {
+  if (!workerBlobUrl) {
+    let parts;
+    if (libSources) {
+      // Inline mode: prepend lib sources so the worker has them without importScripts
+      parts = [libSources.util, '\n;\n', libSources.crypto, '\n;\n', workerCode];
+    } else {
+      // Fallback mode: worker will use importScripts (may fail on file://)
+      parts = [workerCode];
+    }
+    const blob = new Blob(parts, { type: 'application/javascript' });
+    workerBlobUrl = URL.createObjectURL(blob);
+  }
+  return workerBlobUrl;
+}
+
+// ============================================================
+// LIB LOADER (main thread check + prefetch for worker inlining)
+// ============================================================
+let libSources = null;
+
+async function waitForLibs() {
+  // 1. Wait for main thread <script> tags to load polkadot
+  let tries = 0;
+  while ((!window.polkadotUtilCrypto || !window.polkadotUtil) && tries < 100) {
+    await new Promise(r => setTimeout(r, 100));
+    tries++;
+  }
+  if (!window.polkadotUtilCrypto) {
+    el.loaderStatus.style.color = 'var(--red)';
+    el.loaderStatus.textContent = 'Failed to load crypto libs';
+    showError('Failed to load @polkadot crypto libraries from jsdelivr. Check your network/CSP and reload.');
+    return false;
+  }
+  await window.polkadotUtilCrypto.cryptoWaitReady();
+
+  // 2. Pre-fetch lib source text so we can INLINE it into the worker blob.
+  //    This avoids importScripts (which fails when serving over file:// or with strict CSP).
+  el.loaderStatus.textContent = 'Pre-fetching lib sources for workers...';
+  try {
+    const [utilSrc, cryptoSrc] = await Promise.all([
+      fetch(POLKADOT_UTIL_URL).then(r => { if (!r.ok) throw new Error('HTTP '+r.status); return r.text(); }),
+      fetch(POLKADOT_CRYPTO_URL).then(r => { if (!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+    ]);
+    libSources = { util: utilSrc, crypto: cryptoSrc };
+    el.loaderStatus.style.color = 'var(--green)';
+    el.loaderStatus.textContent = `✓ Ready (libs inlined, ${Math.round((utilSrc.length + cryptoSrc.length)/1024)} KB)`;
+  } catch (err) {
+    // Fallback: workers will try importScripts (may fail on file://)
+    el.loaderStatus.style.color = 'var(--amber)';
+    el.loaderStatus.textContent = `⚠ Using importScripts fallback (${err.message})`;
+    console.warn('Could not pre-fetch lib sources:', err);
+  }
+
+  // 3. Warn about file:// — even with the inline trick, some things may fail
+  if (location.protocol === 'file:') {
+    showError('You opened this file via file:// (double-click). Some browsers block Workers/CDN/WASM in this mode. If workers crash, run a local server: `python3 -m http.server 8000` then open http://localhost:8000/vanity_tao.html');
+  }
+
+  state.ready = true;
+  el.startBtn.disabled = false;
+  return true;
+}
+waitForLibs();
+
+// ============================================================
+// START / STOP
+// ============================================================
+el.startBtn.addEventListener('click', async () => {
+  if (!state.pattern) {
+    alert('Enter a pattern first.');
+    return;
+  }
+  if (!state.ready) {
+    alert('Crypto libs still loading...');
+    return;
+  }
+
+  state.running = true;
+  state.attempts = 0;
+  state.lastAttempts = 0;
+  state.found = 0;
+  state.startTime = Date.now();
+  state.lastRateTime = Date.now();
+  state.pendingSamples = [];
+  el.statAttempts.textContent = '0';
+  el.statFound.textContent = '0';
+  el.statRate.textContent = '0';
+  el.startBtn.disabled = true;
+  el.stopBtn.disabled = false;
+  el.statusDot.classList.add('running');
+
+  // Reset terminal
+  const term = document.getElementById('terminal');
+  term.innerHTML = '';
+  terminalEmpty = false;
+  document.getElementById('termStatus').textContent = 'streaming';
+  document.getElementById('termStatus').style.color = 'var(--green)';
+  document.getElementById('errBanner').classList.remove('show');
+
+  const numWorkers = Math.max(1, Math.min(32, parseInt(el.workers.value) || 4));
+  el.statWorkers.textContent = numWorkers;
+
+  logTerminal('init', `Spawning ${numWorkers} worker(s)...`, 'var(--amber)');
+  logTerminal('init', `Pattern: "${state.pattern}" · Position: ${state.position} · Mnemonic: ${el.mnemonicWords.value} words`, 'var(--green-dim)');
+
+  // Spawn workers
+  let spawnedOk = 0;
+  state.workerFailures = 0;
+  state.mainThreadFallback = false;
+  for (let i = 0; i < numWorkers; i++) {
+    try {
+      const w = new Worker(getWorkerUrl());
+      const workerIdx = i + 1;
+      w.onmessage = (e) => handleWorkerMessage(e, workerIdx);
+      w.onerror = (err) => {
+        const detail = (err.message || 'no message')
+          + (err.filename ? ' @ ' + err.filename.slice(-50) : '')
+          + (err.lineno ? ':' + err.lineno : '')
+          + (err.colno ? ':' + err.colno : '');
+        logTerminal('error', `worker #${workerIdx} crashed: ${detail}`, 'var(--red)');
+        state.workerFailures++;
+        maybeFallbackToMainThread(numWorkers);
+        err.preventDefault && err.preventDefault();
+      };
+      w.postMessage({
+        cmd: 'init',
+        utilUrl: POLKADOT_UTIL_URL,
+        cryptoUrl: POLKADOT_CRYPTO_URL
+      });
+      state.workers.push({ worker: w, ready: false, idx: workerIdx });
+      spawnedOk++;
+    } catch (err) {
+      logTerminal('error', `failed to spawn worker #${i+1}: ${err.message}`, 'var(--red)');
+      state.workerFailures++;
+    }
+  }
+  logTerminal('init', `${spawnedOk}/${numWorkers} workers spawned, awaiting init...`, 'var(--green-dim)');
+  // If nothing spawned at all, fall back immediately
+  maybeFallbackToMainThread(numWorkers);
+});
+
+el.stopBtn.addEventListener('click', stopSearch);
+
+function stopSearch() {
+  state.running = false;
+  state.mainThreadFallback = false;
+  state.workers.forEach(({worker}) => {
+    worker.postMessage({ cmd: 'stop' });
+    setTimeout(() => worker.terminate(), 500);
+  });
+  state.workers = [];
+  el.startBtn.disabled = false;
+  el.stopBtn.disabled = true;
+  el.statusDot.classList.remove('running');
+  document.getElementById('termStatus').textContent = 'stopped';
+  document.getElementById('termStatus').style.color = 'var(--muted)';
+}
+
+// ============================================================
+// MAIN THREAD FALLBACK (when workers crash)
+// ============================================================
+function maybeFallbackToMainThread(numWorkers) {
+  if (state.mainThreadFallback) return;
+  if (state.workerFailures < numWorkers) return;
+  // All workers failed — switch to main thread
+  state.mainThreadFallback = true;
+  // Kill any zombie workers
+  state.workers.forEach(({worker}) => {
+    try { worker.terminate(); } catch (e) {}
+  });
+  state.workers = [];
+  el.statWorkers.textContent = '1 (main)';
+  logTerminal('fallback', 'All workers crashed → switching to main thread (single-threaded, slower but reliable)', 'var(--amber)');
+  runMainThreadSearch();
+}
+
+async function runMainThreadSearch() {
+  const { mnemonicGenerate, mnemonicToMiniSecret, sr25519PairFromSeed, encodeAddress } = window.polkadotUtilCrypto;
+  const pattern = state.pattern;
+  const position = state.position;
+  const mnemonicLen = parseInt(el.mnemonicWords.value);
+  let batchCount = 0;
+  let sampleCounter = 0;
+
+  while (state.running && state.mainThreadFallback) {
+    // Process a small batch then yield to UI (10 attempts ≈ 10-15ms on modern hardware)
+    for (let i = 0; i < 10; i++) {
+      try {
+        const mnemonic = mnemonicGenerate(mnemonicLen);
+        const seed = mnemonicToMiniSecret(mnemonic);
+        const pair = sr25519PairFromSeed(seed);
+        const address = encodeAddress(pair.publicKey, 42);
+        state.attempts++;
+        batchCount++;
+        sampleCounter++;
+
+        let match = false;
+        if (position === 'start') match = address.startsWith(pattern);
+        else if (position === 'end') match = address.endsWith(pattern);
+        else if (position === 'contains') match = address.includes(pattern);
+
+        if (match) {
+          state.found++;
+          addResult(address, mnemonic);
+          addTerminalLine(address, true);
+        }
+
+        if (sampleCounter >= 5) {
+          sampleCounter = 0;
+          state.pendingSamples.push(address);
+          if (state.pendingSamples.length > 20) state.pendingSamples.shift();
+        }
+      } catch (err) {
+        logTerminal('error', `main thread search failed: ${err.message}`, 'var(--red)');
+        showError(`Main thread search error: ${err.message}`);
+        state.running = false;
+        return;
+      }
+    }
+    // Yield to UI / render loop
+    await new Promise(r => setTimeout(r, 0));
+  }
+}
+
+function handleWorkerMessage(e, workerIdx) {
+  const msg = e.data;
+  if (msg.type === 'ready') {
+    const entry = state.workers.find(w => w.worker === e.target);
+    if (entry) entry.ready = true;
+    logTerminal('ready', `worker #${workerIdx || '?'} ✓ libs loaded, starting search`, 'var(--green)');
+    // Start search on this worker
+    e.target.postMessage({
+      cmd: 'start',
+      pattern: state.pattern,
+      position: state.position,
+      mnemonicLen: parseInt(el.mnemonicWords.value)
+    });
+  } else if (msg.type === 'progress') {
+    state.attempts += msg.count;
+  } else if (msg.type === 'sample') {
+    state.pendingSamples.push(msg.address);
+    if (state.pendingSamples.length > 20) state.pendingSamples.shift();
+  } else if (msg.type === 'match') {
+    state.found++;
+    addResult(msg.address, msg.mnemonic);
+    addTerminalLine(msg.address, true);
+  } else if (msg.type === 'error') {
+    console.error('Worker error:', msg.error);
+    logTerminal('error', `worker #${workerIdx || '?'} FAILED: ${msg.error}`, 'var(--red)');
+    showError(`Worker init failed: ${msg.error}. Likely cause: blocked importScripts from jsdelivr (try serving over http:// not file://).`);
+  }
+}
+
+function showError(text) {
+  const b = document.getElementById('errBanner');
+  b.textContent = '⚠ ' + text;
+  b.classList.add('show');
+}
+
+// ============================================================
+// LIVE TERMINAL
+// ============================================================
+const MAX_TERMINAL_LINES = 18;
+let terminalEmpty = true;
+
+function escapeHtmlChar(c) {
+  return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c] || c);
+}
+
+function buildTerminalLineHtml(address) {
+  const p = state.pattern;
+  if (!p) return '> ' + address;
+
+  // Highlight contiguous matching chars at the search position
+  let chars = [];
+  if (state.position === 'start') {
+    let n = 0;
+    while (n < p.length && n < address.length && address[n] === p[n]) n++;
+    for (let i = 0; i < address.length; i++) {
+      const c = escapeHtmlChar(address[i]);
+      chars.push(i < n ? `<span class="partial">${c}</span>` : `<span class="miss">${c}</span>`);
+    }
+  } else if (state.position === 'end') {
+    let n = 0;
+    while (n < p.length && n < address.length && address[address.length - 1 - n] === p[p.length - 1 - n]) n++;
+    const matchStart = address.length - n;
+    for (let i = 0; i < address.length; i++) {
+      const c = escapeHtmlChar(address[i]);
+      chars.push(i >= matchStart ? `<span class="partial">${c}</span>` : `<span class="miss">${c}</span>`);
+    }
+  } else {
+    // contains: highlight if found anywhere
+    const idx = address.indexOf(p);
+    for (let i = 0; i < address.length; i++) {
+      const c = escapeHtmlChar(address[i]);
+      const inMatch = idx >= 0 && i >= idx && i < idx + p.length;
+      chars.push(inMatch ? `<span class="partial">${c}</span>` : `<span class="miss">${c}</span>`);
+    }
+  }
+  // Truncate to fit: keep first 22 + ... + last 18 chars
+  const len = address.length;
+  if (len > 44) {
+    const front = chars.slice(0, 22).join('');
+    const back = chars.slice(len - 18).join('');
+    return `<span class="prefix">&gt;</span>${front}<span style="opacity:0.5">...</span>${back}`;
+  }
+  return `<span class="prefix">&gt;</span>${chars.join('')}`;
+}
+
+function addTerminalLine(address, isMatch = false) {
+  const term = document.getElementById('terminal');
+  if (terminalEmpty) {
+    term.innerHTML = '';
+    terminalEmpty = false;
+  }
+
+  const div = document.createElement('div');
+  div.className = 'terminal-line' + (isMatch ? ' match-line' : '');
+
+  if (isMatch) {
+    div.innerHTML = `<span class="prefix">[MATCH ✓]</span> ${escapeHtml(address)}`;
+  } else {
+    div.innerHTML = buildTerminalLineHtml(address);
+  }
+
+  term.appendChild(div);
+
+  // Cap lines
+  while (term.children.length > MAX_TERMINAL_LINES) {
+    term.removeChild(term.firstChild);
+  }
+}
+
+function logTerminal(tag, message, color) {
+  const term = document.getElementById('terminal');
+  if (terminalEmpty) {
+    term.innerHTML = '';
+    terminalEmpty = false;
+  }
+  const div = document.createElement('div');
+  div.className = 'terminal-line';
+  const c = color || 'var(--green-dim)';
+  div.innerHTML = `<span class="prefix" style="color:${c}">[${escapeHtml(tag)}]</span> <span style="color:${c}">${escapeHtml(message)}</span>`;
+  div.style.color = c;
+  term.appendChild(div);
+  while (term.children.length > MAX_TERMINAL_LINES) {
+    term.removeChild(term.firstChild);
+  }
+}
+
+// Drain pending samples at smooth rate
+setInterval(() => {
+  if (!state.running) return;
+  // Render up to 2 samples per tick for a fast-but-readable stream
+  for (let i = 0; i < 2 && state.pendingSamples.length > 0; i++) {
+    const addr = state.pendingSamples.shift();
+    addTerminalLine(addr, false);
+  }
+}, 70);
+
+// ============================================================
+// UI UPDATE LOOP
+// ============================================================
+setInterval(() => {
+  if (!state.running) return;
+  el.statAttempts.textContent = formatNumber(state.attempts);
+  el.statFound.textContent = state.found;
+
+  const now = Date.now();
+  const dt = (now - state.lastRateTime) / 1000;
+  if (dt >= 1) {
+    state.rate = (state.attempts - state.lastAttempts) / dt;
+    state.lastAttempts = state.attempts;
+    state.lastRateTime = now;
+    el.statRate.textContent = formatNumber(state.rate);
+    updateDifficulty();
+  }
+  el.elapsedTime.textContent = formatElapsed(now - state.startTime);
+}, 250);
+
+// ============================================================
+// RESULTS
+// ============================================================
+let resultId = 0;
+function addResult(address, mnemonic) {
+  // Clear empty state
+  if (state.found === 1) el.results.innerHTML = '';
+
+  const id = 'r' + (++resultId);
+  const div = document.createElement('div');
+  div.className = 'result';
+
+  // Highlight pattern in address
+  let displayAddr;
+  const p = state.pattern;
+  if (state.position === 'start') {
+    displayAddr = `<span class="highlight">${escapeHtml(p)}</span>${escapeHtml(address.slice(p.length))}`;
+  } else if (state.position === 'end') {
+    displayAddr = `${escapeHtml(address.slice(0, address.length - p.length))}<span class="highlight">${escapeHtml(p)}</span>`;
+  } else {
+    const idx = address.indexOf(p);
+    displayAddr = `${escapeHtml(address.slice(0, idx))}<span class="highlight">${escapeHtml(p)}</span>${escapeHtml(address.slice(idx + p.length))}`;
+  }
+
+  const wordCount = mnemonic.split(' ').length;
+
+  div.innerHTML = `
+    <div class="result-addr">${displayAddr}</div>
+    <div class="result-actions">
+      <button class="mini" data-action="copy-addr" data-val="${escapeAttr(address)}">Copy Address</button>
+      <button class="mini" data-action="reveal" data-id="${id}">Reveal Mnemonic</button>
+      <button class="mini" data-action="copy-mnemonic" data-val="${escapeAttr(mnemonic)}">Copy Mnemonic</button>
+    </div>
+    <div class="seed-box" id="${id}-seed">
+      <div class="seed-warn">⚠ ${wordCount}-WORD MNEMONIC — Keep offline. Anyone with this controls the wallet.</div>
+      <div style="font-size: 14px; line-height: 1.7; color: var(--text);">${escapeHtml(mnemonic)}</div>
+      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted);">
+        Import: <code style="color: var(--green);">btcli wallet regen_coldkey --mnemonic "${escapeHtml(mnemonic)}"</code>
+      </div>
+    </div>
+  `;
+
+  div.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.action;
+      if (action === 'copy-addr' || action === 'copy-mnemonic') {
+        navigator.clipboard.writeText(btn.dataset.val);
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copied';
+        setTimeout(() => btn.textContent = orig, 1500);
+      } else if (action === 'reveal') {
+        const box = document.getElementById(btn.dataset.id + '-seed');
+        box.classList.toggle('shown');
+        btn.textContent = box.classList.contains('shown') ? 'Hide Mnemonic' : 'Reveal Mnemonic';
+      }
+    });
+  });
+
+  el.results.insertBefore(div, el.results.firstChild);
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+el.clearBtn.addEventListener('click', () => {
+  if (confirm('Clear all results? Make sure you saved any seeds you need.')) {
+    el.results.innerHTML = '<div class="empty">No matches yet<span class="blink">_</span></div>';
+    state.found = 0;
+    el.statFound.textContent = '0';
+  }
+});
+
+document.getElementById('howto').addEventListener('click', (e) => {
+  e.preventDefault();
+  const box = document.getElementById('howtoBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  if (box.style.display === 'block') box.scrollIntoView({ behavior: 'smooth' });
+});
+
+el.workers.addEventListener('input', updateDifficulty);
+el.mnemonicWords.addEventListener('change', updateDifficulty);
+
+// ============================================================
+// DISCLAIMER MODAL
+// ============================================================
+const agreeCheck = document.getElementById('agreeCheck');
+const agreeBtn = document.getElementById('agreeBtn');
+const disclaimerModal = document.getElementById('disclaimerModal');
+const DISCLAIMER_KEY = 'subnetalpha_vanity_disclaimer_v1';
+
+// Skip modal if already agreed in a prior session
+if (localStorage.getItem(DISCLAIMER_KEY) === 'agreed') {
+  disclaimerModal.classList.add('hidden');
+}
+
+agreeCheck.addEventListener('change', () => {
+  agreeBtn.disabled = !agreeCheck.checked;
+});
+agreeBtn.addEventListener('click', () => {
+  if (!agreeCheck.checked) return;
+  try { localStorage.setItem(DISCLAIMER_KEY, 'agreed'); } catch (e) {}
+  disclaimerModal.classList.add('hidden');
+});
+
+// ============================================================
+// OFFLINE DETECTION (updates trust badge)
+// ============================================================
+const offlineBadge = document.getElementById('offlineBadge');
+function updateOfflineBadge() {
+  if (navigator.onLine) {
+    offlineBadge.textContent = '⊙ Network: ONLINE';
+    offlineBadge.className = 'offline-no';
+  } else {
+    offlineBadge.textContent = '✓ Network: OFFLINE (safe)';
+    offlineBadge.className = 'offline-yes';
+  }
+}
+window.addEventListener('online', updateOfflineBadge);
+window.addEventListener('offline', updateOfflineBadge);
+updateOfflineBadge();
+updatePreview();
+updateDifficulty();
+</script>
+
+</body>
+</html>
